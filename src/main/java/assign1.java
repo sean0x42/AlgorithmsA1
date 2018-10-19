@@ -1,8 +1,8 @@
-import io.seanbailey.railnetwork.RailNetwork;
+import io.seanbailey.railnetwork.Main;
 
 /**
  * Entry point to the application. This essentially acts as an interface to 
- * @link{io.seanbailey.railnetwork.RailNetwork}.
+ * @link{io.seanbailey.railnetwork.Main}.
  *
  * <p>
  * This program finds the shortest path (based on travel time) between a two
@@ -26,6 +26,6 @@ public class assign1 {
    * @param args An array of command line args from STDIN.
    */
   public static void main(String[] args) {
-    RailNetwork.main(args);
+    Main.main(args);
   }
 }

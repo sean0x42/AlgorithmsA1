@@ -13,7 +13,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'io.seanbailey.railnetwork.RailNetwork'
+mainClassName = 'io.seanbailey.railnetwork.Main'
 group = 'io.seanbailey.railnetwork'
 
 dependencies {
