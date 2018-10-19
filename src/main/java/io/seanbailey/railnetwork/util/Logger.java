@@ -3,7 +3,11 @@ package io.seanbailey.railnetwork.util;
 import java.io.PrintStream;
 
 public class Logger {
-  
+
+  // TODO disable this perform submission
+  // Whether debug messages should be printed.
+  public static final boolean ENABLE_DEBUG = true;
+
   private PrintStream out;
   private PrintStream err;
 
@@ -39,6 +43,11 @@ public class Logger {
    * @param message Message to print.
    */
   public void debug(String message) {
+    // Ensure that debug messages are enabled in this build
+    if (!ENABLE_DEBUG) {
+      return;
+    }
+
     print(out, "Debug: " + message);
   }
 

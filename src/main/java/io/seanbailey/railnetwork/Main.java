@@ -52,14 +52,14 @@ public class Main {
     Station[] stations;
     String origin = args[1];
     String destination = args[2];
+    logger.debug("%s → %s", origin, destination);
 
     try {
       // Retrieve and validate file
       file = validateFile(args[0]);
 
       // Parse file and retrieve stations
-      StationParser parser = new StationParser();
-      stations = parser.parse(file);
+      stations = StationParser.parse(file);
     } catch (ValidationException | ParseException exception) {
       logger.error(exception.getMessage());
       return;
