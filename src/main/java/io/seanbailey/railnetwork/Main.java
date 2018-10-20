@@ -62,18 +62,24 @@ public class Main {
       // Parse file and retrieve stations
       StationParser parser = new StationParser();
       stations = parser.parse(file);
+
+      // Find shortest path
+      RailNetwork network = new RailNetwork(stations);
+      network.findShortestPath(origin, destination);
     } catch (ValidationException | ParseException exception) {
       logger.error(exception.getMessage());
       return;
     }
-
-    RailNetwork network = new RailNetwork(stations);
   }
 
   /**
-   * Validates the given file path. Note that this does not perform any
-   * validation on the contents of the file, it only ensures that the file
-   * exists and is readable.
+   * Validates the given file path. 
+   *
+   * <p>
+   * Note that this does not perform any validation on the contents of the file,
+   * it only ensures that the file exists and is readable.
+   * </p>
+   *
    * @param path Path to file.
    * @return A valid file.
    * @throws ValidationException if the path is not valid.
@@ -99,7 +105,7 @@ public class Main {
 
     return file;
   }
-  
+
   /**
    * Prints usage information.
    */

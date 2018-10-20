@@ -48,7 +48,7 @@ public class SortUtil {
    */
   private static int partition(Station[] stations, int i, int j) {
     // Init
-    logger.debug("Partitioning from %d to %d", i, j);
+    //logger.debug("Partitioning from %d to %d", i, j);
     int partition = i;
     Station station = stations[i];
 

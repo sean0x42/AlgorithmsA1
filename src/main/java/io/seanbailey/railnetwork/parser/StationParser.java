@@ -162,95 +162,6 @@ public class StationParser {
   }
 
   /**
-   * Traverses the DOM and adds station edges to each station.
-   * @param document DOM tree.
-   * @throws ValidationException if an invalid station is encountered.
-   */
-  private void addStationEdges(Document document) throws ValidationException {
-    // Init
-    NodeList stationEdges = document.getElementsByTagName("StationEdges");
-  
-    // Iterate over each edge list
-    for (int i = 0; i < stationEdges.getLength(); i++) {
-      Node stationEdge = stationEdges.item(i);
-      Station station = findStation(stationEdge.getParentNode());
-      NodeList edges = stationEdge.getChildNodes();
-
-      // Iterate over each edge
-      for (int j = 0; j < edges.getLength(); j++) {
-        Node edge = edges.item(j);
-        
-        // Skip over text nodes
-        if (edge.getNodeName().equals("#text")) {
-          continue;
-        }
-
-        createEdgeFromNode(edge, station);
-      }
-    }
-  }
-
-  /**
-   * Searches for a station with the given name and line.
-   * @param name Station name.
-   * @param line Line name.
-   * @return The located station.
-   */
-  private Station findStation(String name, String line)
-      throws ValidationException {
-    return findStation(new Station(name, line));
-  }
-
-  /**
-   * Searches for the corresponding station.
-   * @param node Station node, which corresponds to an existing station.
-   * @return The found station.
-   * @throws ValidationException if a station is invalid.
-   */
-  private Station findStation(Node node) 
-      throws ValidationException {
-    Station station = createStationFromNode(node);
-    Station found = findStation(station);
-
-    if (found == null) {
-      throw new ValidationException("A node in the XML file referenced a " +
-          "non-existent station.");
-    }
-
-    return found;
-  }
-
-  /**
-   * Performs a binary search on the station array, in order to find the
-   * appropraite station.
-   * @param station Station to search for.
-   * @return The station (from the stations array), or null.
-   */
-  private Station findStation(Station station) {
-    // Init
-    int i = 0;
-    int j = stations.getLength() - 1;
-
-    while (i <= j) {
-      // Check halfway between i and j
-      int k = (i + j) / 2;
-      int delta = station.compareTo(stations.get(k));
-
-      // Compare
-      if (delta == 0) {
-        return stations.get(k);
-      } else if (delta < 0) {
-        j = k - 1;
-      } else {
-        i = k + 1;
-      }
-    }
-
-    // Station not found
-    return null;
-  }
-
-  /**
    * Creates a station edge from a given node.
    * @param node Node which defines the edge.
    * @param station Station which node is attached to.
@@ -296,7 +207,55 @@ public class StationParser {
     }
 
     // Find adjacent station and add
-    Station adjacent = findStation(name, line);
+    Station adjacent = stations.find(name, line);
     station.addAdjacentStation(adjacent, duration);
+  }
+
+  /**
+   * Traverses the DOM and adds station edges to each station.
+   * @param document DOM tree.
+   * @throws ValidationException if an invalid station is encountered.
+   */
+  private void addStationEdges(Document document) throws ValidationException {
+    // Init
+    NodeList stationEdges = document.getElementsByTagName("StationEdges");
+  
+    // Iterate over each edge list
+    for (int i = 0; i < stationEdges.getLength(); i++) {
+      Node stationEdge = stationEdges.item(i);
+      Station station = findStation(stationEdge.getParentNode());
+      NodeList edges = stationEdge.getChildNodes();
+
+      // Iterate over each edge
+      for (int j = 0; j < edges.getLength(); j++) {
+        Node edge = edges.item(j);
+        
+        // Skip over text nodes
+        if (edge.getNodeName().equals("#text")) {
+          continue;
+        }
+
+        createEdgeFromNode(edge, station);
+      }
+    }
+  }
+
+  /**
+   * Searches for the corresponding station.
+   * @param node Station node, which corresponds to an existing station.
+   * @return The found station.
+   * @throws ValidationException if a station is invalid.
+   */
+  private Station findStation(Node node) 
+      throws ValidationException {
+    Station station = createStationFromNode(node);
+    Station found = stations.find(station);
+
+    if (found == null) {
+      throw new ValidationException("A node in the XML file referenced a " +
+          "non-existent station.");
+    }
+
+    return found;
   }
 }
