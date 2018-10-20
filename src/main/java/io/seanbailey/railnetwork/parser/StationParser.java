@@ -3,8 +3,8 @@ package io.seanbailey.railnetwork.parser;
 import io.seanbailey.railnetwork.exception.ParseException;
 import io.seanbailey.railnetwork.exception.ValidationException;
 import io.seanbailey.railnetwork.station.Station;
+import io.seanbailey.railnetwork.station.StationList;
 import io.seanbailey.railnetwork.util.Logger;
-import io.seanbailey.railnetwork.util.SortUtil;
 import java.io.File;
 import java.io.IOException;
 import javax.xml.parsers.DocumentBuilder;
@@ -28,42 +28,45 @@ public class StationParser {
     logger = new Logger(System.out, System.err);
   }
 
+  private StationList stations;
+
   /**
    * Parses the given file.
+   *
+   * <p>
+   * The parsing process occurs over four main steps.
+   * <ol>
+   *   <li>Parse the given file into a DOM tree.</li>
+   *   <li>Traverse the DOM finding stations. Create corresponding Java
+   *   objects.</li>
+   *   <li>Sort the list of stations for efficient searching.</li>
+   *   <li>Traverse the DOM again to find station edges.</li>
+   * </ol>
+   * </p>
+   *
    * @param file File to parse.
    * @return An array of stations parsed from the XML file.
    * @throws ParseException if the file cannot be parsed for any reason.
-   * @throws ValidationException of a node is invalid.
+   * @throws ValidationException if a node is invalid.
    */
-  public static Station[] parse(File file) throws ParseException, 
+  public StationList parse(File file) throws ParseException, 
          ValidationException {
-    // Init
+    // Step 1: Parse XML file to DOM
     Document document = getDocument(file);
-    NodeList nodes = document.getElementsByTagName("Station");
-    Station[] stations = new Station[nodes.getLength()];
 
-    // Create stations from nodes
-    for (int i = 0; i < nodes.getLength(); i++) {
-      stations[i] = createStationFromNode(nodes.item(i));
-    }
+    // Step 2: Create stations
+    createStations(document);
 
-    // Sort station array, allowing us to efficiently search it later
-    quickSort(stations);
+    // Step 3: Sort station array
+    stations.sort();
 
-    // Add adjacent stations
-    NodeList edges = document.getElementsByTagName("StationEdge");
-    // Cache the most recent station so we don't have to search thanks to the
-    // principle of locality
-    Station cache = null; 
-    for (int i = 0; i < edges.getLength(); i++) {
-      Node edge = edges.item(i);
+    // Step 4: Find station edges
+    addStationEdges(document);
 
-    }
-
-    // Print stations if debug is enabled
+    // Print stations for debugging purposes
     if (Logger.ENABLE_DEBUG) {
-      for (int i = 0; i < stations.length; i++) {
-        logger.debug(stations[i].toString());
+      for (Station station : stations) { 
+        logger.debug(station.toString());
       }
     }
 
@@ -93,6 +96,23 @@ public class StationParser {
     }
 
     return document;
+  }
+
+  /**
+   * Creates an array of stations from the DOM.
+   * @param document DOM tree.
+   * @return An array of stations.
+   * @throws Validation exception if a station is invalid.
+   */
+  private void createStations(Document document) throws ValidationException {
+    // Init
+    NodeList nodes = document.getElementsByTagName("Station");
+    stations = new StationList(nodes.getLength());
+
+    // Create stations from nodes
+    for (int i = 0; i < nodes.getLength(); i++) {
+      stations.put(i, createStationFromNode(nodes.item(i)));
+    }
   }
 
   /**
@@ -127,31 +147,156 @@ public class StationParser {
     }
 
     // Ensure required values where found
+    String error = null;
     if (name == null) {
-      throw new ValidationException("Invalid station in XML file. No name was defined.");
+      error = "No name was defined.";
     } else if (line == null) {
-      throw new ValidationException("Invalid station in XML file. No line was defined.");
+      error = "No line was defined.";
+    }
+
+    if (error != null) {
+      throw new ValidationException("Invalid station in XML file. %s", error);
     }
 
     return new Station(name, line);
   }
 
   /**
-   * Runs quick sort on the given station array.
-   * 
-   * <p>
-   * Sorting the station array allows us to perform binary searches as needed.
-   * This is especially useful when populating station edges, but has other
-   * applications as well.
-   * </p>
-   *
-   * @param stations An array of stations to sort.
-   * @see io.seanbailey.railnetwork.util.Sorter#quickSort(Station[])
+   * Traverses the DOM and adds station edges to each station.
+   * @param document DOM tree.
+   * @throws ValidationException if an invalid station is encountered.
    */
-  private static void quickSort(Station[] stations) {
-    logger.debug("Performing quick sort on station array.");
+  private void addStationEdges(Document document) throws ValidationException {
+    // Init
+    NodeList stationEdges = document.getElementsByTagName("StationEdges");
+  
+    // Iterate over each edge list
+    for (int i = 0; i < stationEdges.getLength(); i++) {
+      Node stationEdge = stationEdges.item(i);
+      Station station = findStation(stationEdge.getParentNode());
+      NodeList edges = stationEdge.getChildNodes();
 
-    // Moved to external class to prevent bloat
-    SortUtil.quickSort(stations);
+      // Iterate over each edge
+      for (int j = 0; j < edges.getLength(); j++) {
+        Node edge = edges.item(j);
+        
+        // Skip over text nodes
+        if (edge.getNodeName().equals("#text")) {
+          continue;
+        }
+
+        createEdgeFromNode(edge, station);
+      }
+    }
+  }
+
+  /**
+   * Searches for a station with the given name and line.
+   * @param name Station name.
+   * @param line Line name.
+   * @return The located station.
+   */
+  private Station findStation(String name, String line)
+      throws ValidationException {
+    return findStation(new Station(name, line));
+  }
+
+  /**
+   * Searches for the corresponding station.
+   * @param node Station node, which corresponds to an existing station.
+   * @return The found station.
+   * @throws ValidationException if a station is invalid.
+   */
+  private Station findStation(Node node) 
+      throws ValidationException {
+    Station station = createStationFromNode(node);
+    Station found = findStation(station);
+
+    if (found == null) {
+      throw new ValidationException("A node in the XML file referenced a " +
+          "non-existent station.");
+    }
+
+    return found;
+  }
+
+  /**
+   * Performs a binary search on the station array, in order to find the
+   * appropraite station.
+   * @param station Station to search for.
+   * @return The station (from the stations array), or null.
+   */
+  private Station findStation(Station station) {
+    // Init
+    int i = 0;
+    int j = stations.getLength() - 1;
+
+    while (i <= j) {
+      // Check halfway between i and j
+      int k = (i + j) / 2;
+      int delta = station.compareTo(stations.get(k));
+
+      // Compare
+      if (delta == 0) {
+        return stations.get(k);
+      } else if (delta < 0) {
+        j = k - 1;
+      } else {
+        i = k + 1;
+      }
+    }
+
+    // Station not found
+    return null;
+  }
+
+  /**
+   * Creates a station edge from a given node.
+   * @param node Node which defines the edge.
+   * @param station Station which node is attached to.
+   * @throws ValidationException if the station edge is invalid.
+   */
+  private void createEdgeFromNode(Node node, Station station)
+      throws ValidationException {
+    // Init
+    NodeList children = node.getChildNodes();
+    String name = null;
+    String line = null;
+    int duration = Integer.MAX_VALUE;
+
+    // Iterate over children
+    for (int i = 0; i < children.getLength(); i++) {
+      Node child = children.item(i);
+      switch (child.getNodeName()) {
+        case "Name":
+          name = child.getTextContent();
+          break;
+        case "Line":
+          line = child.getTextContent();
+          break;
+        case "Duration":
+          duration = Integer.parseInt(child.getTextContent());
+      }
+    }
+
+    // Ensure required values where found
+    String error = null;
+    if (name == null) {
+      error = "No name was defined.";
+    } else if (line == null) {
+      error = "No line was defined.";
+    } else if (duration == Integer.MAX_VALUE) {
+      error = "No duration was defined.";
+    } else if (duration <= 0) {
+      error = "Duration must be a positive, non-zero value.";
+    }
+
+    if (error != null) {
+      throw new ValidationException("Invalid edge in XML file. %s", error);
+    }
+
+    // Find adjacent station and add
+    Station adjacent = findStation(name, line);
+    station.addAdjacentStation(adjacent, duration);
   }
 }

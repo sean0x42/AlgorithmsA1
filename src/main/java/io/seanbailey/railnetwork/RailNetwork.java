@@ -1,6 +1,7 @@
 package io.seanbailey.railnetwork;
 
 import io.seanbailey.railnetwork.station.Station;
+import io.seanbailey.railnetwork.station.StationList;
 
 /**
  * Represents a rail network. 
@@ -14,14 +15,14 @@ import io.seanbailey.railnetwork.station.Station;
  */
 public class RailNetwork {
 
-  private final Station[] stations;
+  private final StationList stations;
 
   /**
    * Constructs a new rail network.
    * @param stations An array of stations, each with an adjacency list of
    *                 station edges.
    */
-  public RailNetwork(Station[] stations) {
+  public RailNetwork(StationList stations) {
     this.stations = stations;
   }
 }

@@ -4,6 +4,7 @@ import io.seanbailey.railnetwork.exception.ParseException;
 import io.seanbailey.railnetwork.exception.ValidationException;
 import io.seanbailey.railnetwork.parser.StationParser;
 import io.seanbailey.railnetwork.station.Station;
+import io.seanbailey.railnetwork.station.StationList;
 import io.seanbailey.railnetwork.util.Logger;
 import java.io.File;
 
@@ -49,7 +50,7 @@ public class Main {
 
     // Input
     File file;
-    Station[] stations;
+    StationList stations;
     String origin = args[1];
     String destination = args[2];
     logger.debug("%s → %s", origin, destination);
@@ -59,7 +60,8 @@ public class Main {
       file = validateFile(args[0]);
 
       // Parse file and retrieve stations
-      stations = StationParser.parse(file);
+      StationParser parser = new StationParser();
+      stations = parser.parse(file);
     } catch (ValidationException | ParseException exception) {
       logger.error(exception.getMessage());
       return;
