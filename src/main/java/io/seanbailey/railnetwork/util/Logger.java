@@ -6,7 +6,7 @@ public class Logger {
 
   // TODO disable this perform submission
   // Whether debug messages should be printed.
-  public static final boolean ENABLE_DEBUG = false;
+  public static final boolean ENABLE_DEBUG = true;
 
   private PrintStream out;
   private PrintStream err;
