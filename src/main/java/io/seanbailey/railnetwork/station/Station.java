@@ -15,6 +15,7 @@ public class Station implements Comparable<Station> {
   private final String name;
   private final String line;
   private LinkedList<StationEdge> adjacentStations;
+  private int distanceFromOrigin;
 
   /**
    * Constructs a new station.
@@ -25,6 +26,7 @@ public class Station implements Comparable<Station> {
     this.name = name;
     this.line = line;
     adjacentStations = new LinkedList<>();
+    distanceFromOrigin = Integer.MAX_VALUE;
   }
 
   /**
@@ -34,14 +36,20 @@ public class Station implements Comparable<Station> {
    */
   @Override
   public int compareTo(Station station) {
-    int nameDelta = name.compareTo(station.getName());
-
-    // If names are identical, compare line
-    if (nameDelta == 0) {
-      return line.compareTo(station.getLine());
+    // First compare distance from origin
+    int distanceDelta = distanceFromOrigin - station.getDistanceFromOrigin();
+    if (distanceDelta != 0) {
+      return distanceDelta;
     }
 
-    return nameDelta;
+    // Then compare names
+    int nameDelta = name.compareTo(station.getName());
+    if (nameDelta != 0) {
+      return nameDelta;
+    }
+
+    // Finally, compare line
+    return line.compareTo(station.getLine());
   }
 
   /**
@@ -52,7 +60,8 @@ public class Station implements Comparable<Station> {
     return "Station{" + 
       "name: " + name + 
       ", line: " + line +
-      ", adjacentStations: " + adjacentStations.toString() +
+      ", adjacentStations: " + adjacentStations.size() +
+      ", distanceFromOrigin: " + distanceFromOrigin +
       "}";
   }
 
@@ -70,5 +79,13 @@ public class Station implements Comparable<Station> {
 
   public String getLine() {
     return line;
+  }
+
+  public int getDistanceFromOrigin() {
+    return distanceFromOrigin;
+  }
+
+  public void setDistanceFromOrigin(int distance) {
+    distanceFromOrigin = distance;
   }
 }

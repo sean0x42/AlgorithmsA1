@@ -3,8 +3,10 @@ package io.seanbailey.railnetwork.parser;
 import io.seanbailey.railnetwork.exception.ParseException;
 import io.seanbailey.railnetwork.exception.ValidationException;
 import io.seanbailey.railnetwork.station.Station;
-import io.seanbailey.railnetwork.station.StationList;
 import io.seanbailey.railnetwork.util.Logger;
+import io.seanbailey.railnetwork.util.MinHeap;
+import io.seanbailey.railnetwork.util.SearchUtil;
+import io.seanbailey.railnetwork.util.SortUtil;
 import java.io.File;
 import java.io.IOException;
 import javax.xml.parsers.DocumentBuilder;
@@ -22,13 +24,9 @@ import org.xml.sax.SAXException;
  */
 public class StationParser {
 
-  private static final Logger logger;
+  private static final Logger logger = new Logger();
 
-  static {
-    logger = new Logger(System.out, System.err);
-  }
-
-  private StationList stations;
+  private MinHeap<Station> stations;
 
   /**
    * Parses the given file.
@@ -49,7 +47,7 @@ public class StationParser {
    * @throws ParseException if the file cannot be parsed for any reason.
    * @throws ValidationException if a node is invalid.
    */
-  public StationList parse(File file) throws ParseException, 
+  public MinHeap<Station> parse(File file) throws ParseException, 
          ValidationException {
     // Step 1: Parse XML file to DOM
     Document document = getDocument(file);
@@ -58,17 +56,17 @@ public class StationParser {
     createStations(document);
 
     // Step 3: Sort station array
-    stations.sort();
+    SortUtil.quickSort(stations);
 
     // Step 4: Find station edges
     addStationEdges(document);
 
     // Print stations for debugging purposes
-    if (Logger.ENABLE_DEBUG) {
-      for (Station station : stations) { 
-        logger.debug(station.toString());
-      }
-    }
+    //if (Logger.ENABLE_DEBUG) {
+    //  for (Station station : stations.getNodes()) { 
+    //    logger.debug(station.toString());
+    //  }
+    //}
 
     return stations;
   }
@@ -107,11 +105,11 @@ public class StationParser {
   private void createStations(Document document) throws ValidationException {
     // Init
     NodeList nodes = document.getElementsByTagName("Station");
-    stations = new StationList(nodes.getLength());
+    stations = new MinHeap<>(new Station[nodes.getLength()]);
 
     // Create stations from nodes
     for (int i = 0; i < nodes.getLength(); i++) {
-      stations.put(i, createStationFromNode(nodes.item(i)));
+      stations.insert(createStationFromNode(nodes.item(i)));
     }
   }
 
@@ -207,7 +205,7 @@ public class StationParser {
     }
 
     // Find adjacent station and add
-    Station adjacent = stations.find(name, line);
+    Station adjacent = findStation(name, line);
     station.addAdjacentStation(adjacent, duration);
   }
 
@@ -242,20 +240,44 @@ public class StationParser {
 
   /**
    * Searches for the corresponding station.
-   * @param node Station node, which corresponds to an existing station.
-   * @return The found station.
-   * @throws ValidationException if a station is invalid.
+   * @see #findStation(Station)
+   * @param name Name of station.
+   * @param line Station line.
+   * @return Located station or null.
    */
-  private Station findStation(Node node) 
-      throws ValidationException {
-    Station station = createStationFromNode(node);
-    Station found = stations.find(station);
+  private Station findStation(String name, String line) {
+    return findStation(new Station(name, line));
+  }
 
-    if (found == null) {
-      throw new ValidationException("A node in the XML file referenced a " +
-          "non-existent station.");
+  /**
+   * Searches for the corresponding station.
+   * @see #findStation(Station)
+   * @param node Station node, which corresponds to an existing station.
+   * @throws ValidationException If the node is invalid.
+   */
+  private Station findStation(Node node) throws ValidationException {
+    Station station = findStation(createStationFromNode(node));
+
+    // Ensure station was found
+    if (station == null) {
+      throw new ValidationException("A node in the XML file referenced a non-existent station.");
     }
 
-    return found;
+    return station;
+  }
+
+  /**
+   * Searches for the correspond station.
+   *
+   * <p>
+   * This function should only be called once the station array is sorted, as it
+   * makes use of a binary search for efficiency.
+   * </p>
+   *
+   * @param station Station to search for
+   * @return Located station or null if not found.
+   */
+  private Station findStation(Station station) {
+    return SearchUtil.find(stations.getNodes(), station);
   }
 }

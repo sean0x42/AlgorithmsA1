@@ -13,6 +13,13 @@ public class Logger {
 
   /**
    * Constructs a new logger.
+   */
+  public Logger() {
+    this(System.out, System.err);
+  }
+
+  /**
+   * Constructs a new logger.
    * @param out Standard output stream.
    * @param err Error output stream.
    */
