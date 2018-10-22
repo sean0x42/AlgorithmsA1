@@ -51,7 +51,7 @@ public class WeightedHeap<T> {
       // Get parent and compare
       int parentIndex = outof[(i / 2) - 1];
       parent = values[parentIndex];
-      if (node.compareTo(parent) <= 0) {
+      if (node.compareTo(parent) > 0) {
         break;
       }
 
@@ -66,36 +66,6 @@ public class WeightedHeap<T> {
     into[size] = i - 1;
     values[size] = node;
     size++;
-  }
-
-  /**
-   * Updates the weight of a particular node, then restores the heap.
-   * @param index Heap index of node to update.
-   * @param weight New node weight.
-   */
-  public void updateWeight(int index, int weight) {
-    // Init
-    Node<T> node = values[outof[index]];
-    node.setWeight(weight);
-
-    int i = index + 1;
-    Node<T> parent = null;
-    while (i > 1) {
-      // Get parent and compare
-      int parentIndex = outof[(i / 2) - 1];
-      parent = values[parentIndex];
-      if (node.compareTo(parent) <= 0) {
-        break;
-      }
-
-      // Move parent down 
-      outof[i - 1] = parentIndex;
-      into[parentIndex] = i - 1;
-      i = i / 2;
-    }
-
-    outof[i - 1] = index;
-    into[index] = i - 1;
   }
 
   /**
@@ -126,15 +96,15 @@ public class WeightedHeap<T> {
         Node<T> left = values[outof[child - 1]];
         Node<T> right = values[outof[child]];
 
-        // Use right child if it's larger
-        if (right.compareTo(left) > 0) {
+        // Use right child if it's smaller
+        if (right.compareTo(left) < 0) {
           child++;
         }
       }
 
       // Compare current to child
       Node<T> childNode = values[outof[child - 1]];
-      if (childNode.compareTo(node) <= 0) {
+      if (childNode.compareTo(node) >= 0) {
         break;
       }
       
@@ -146,7 +116,6 @@ public class WeightedHeap<T> {
 
     // Put node in its new place
     logger.debug("Sifted down from %d to %d", index + 1, i);
-    logger.debug(String.valueOf(node.getWeight()));
     outof[i - 1] = original;
     into[original] = i - 1;
   }
@@ -165,6 +134,13 @@ public class WeightedHeap<T> {
    */
   public Node<T> get(int index) {
     return values[outof[index]];
+  }
+
+  /**
+   * @return Whether the heap is empty.
+   */
+  public boolean isEmpty() {
+    return size == 0;
   }
 
   public int getSize() {

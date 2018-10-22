@@ -38,6 +38,17 @@ public class Node<T> implements Comparable<Node<T>> {
     return weight - node.getWeight();
   }
 
+  /**
+   * @return a representation of this node as a string.
+   */
+  @Override
+  public String toString() {
+    return "Node{" +
+      "weight: " + weight +
+      ", value: " + value +
+      "}";
+  }
+
   public T getValue() {
     return value;
   }

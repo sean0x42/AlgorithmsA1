@@ -83,5 +83,11 @@ public class RailNetwork {
 
     // Heapify, since weights have changed
     heap.heapify();
+
+    // Continue until we run out of nodes
+    while (!heap.isEmpty()) {
+      logger.debug("Head: %s", heap.get(0));
+      
+    }
   }
 }
