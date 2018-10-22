@@ -4,8 +4,8 @@ import io.seanbailey.railnetwork.exception.ParseException;
 import io.seanbailey.railnetwork.exception.ValidationException;
 import io.seanbailey.railnetwork.parser.StationParser;
 import io.seanbailey.railnetwork.station.Station;
-import io.seanbailey.railnetwork.station.StationList;
 import io.seanbailey.railnetwork.util.Logger;
+import io.seanbailey.railnetwork.util.MinHeap;
 import java.io.File;
 
 /**
@@ -30,11 +30,7 @@ import java.io.File;
  */
 public class Main {
 
-  private static final Logger logger;
-
-  static {
-    logger = new Logger(System.out, System.err);
-  }
+  private static final Logger logger = new Logger();
 
   /**
    * Main entry point.
@@ -50,7 +46,7 @@ public class Main {
 
     // Input
     File file;
-    StationList stations;
+    MinHeap<Station> stations;
     String origin = args[1];
     String destination = args[2];
     logger.debug("%s → %s", origin, destination);

@@ -1,11 +1,10 @@
 package io.seanbailey.railnetwork;
 
 import io.seanbailey.railnetwork.exception.ValidationException;
-import io.seanbailey.railnetwork.heap.Node;
-import io.seanbailey.railnetwork.heap.WeightedHeap;
 import io.seanbailey.railnetwork.station.Station;
-import io.seanbailey.railnetwork.station.StationList;
 import io.seanbailey.railnetwork.util.Logger;
+import io.seanbailey.railnetwork.util.MinHeap;
+import io.seanbailey.railnetwork.util.SearchUtil;
 
 /**
  * Represents a rail network. 
@@ -19,28 +18,15 @@ import io.seanbailey.railnetwork.util.Logger;
  */
 public class RailNetwork {
 
-  private static final Logger logger;
-
-  static {
-    logger = new Logger(System.out, System.err);
-  }
-
-  private final StationList stations;
-  private WeightedHeap<Station> heap;
+  private static final Logger logger = new Logger();
+  private MinHeap<Station> heap;
 
   /**
    * Constructs a new rail network.
-   * @param stations An array of stations, each with an adjacency list of
-   *                 station edges.
+   * @param stations A min heap containing stations.
    */
-  public RailNetwork(StationList stations) {
-    this.stations = stations;
-
-    // Init heap
-    heap = new WeightedHeap<>(stations.getLength());
-    for (Station station : stations) {
-      heap.insert(station);
-    }
+  public RailNetwork(MinHeap<Station> stations) {
+    this.heap = stations;
   }
 
   /**
@@ -60,34 +46,32 @@ public class RailNetwork {
   public void findShortestPath(String origin, String destination)
       throws ValidationException {
     // Ensure source exists
-    if (!stations.contains(origin)) {
+    if (!SearchUtil.containsName(heap.getNodes(), origin)) {
       throw new ValidationException("Origin '%s' not found.", origin);
     }
 
     // Ensure destination exists
-    if (!stations.contains(destination)) {
+    if (!SearchUtil.containsName(heap.getNodes(), destination)) {
       throw new ValidationException("Destination '%s' not found.", destination);
     }
 
     // Set distance of origin to zero
     for (int i = 0; i < heap.getSize(); i++) {
-      Node<Station> node = heap.get(i);
-      Station station = node.getValue();
+      Station station = heap.get(i);
 
       // Set distance to zero if we're dealing with an origin point.
-      if (station.getName().equals(origin) && node.getWeight() != 0) {
-        node.setWeight(0);
+      if (station.getName().equals(origin)) {
+        station.setDistanceFromOrigin(0);
         logger.debug("Found origin point %s (%s)", station.getName(), station.getLine());
       }
     }
 
-    // Heapify, since weights have changed
+    // Heapify, since distances have changed
     heap.heapify();
 
     // Continue until we run out of nodes
     while (!heap.isEmpty()) {
-      logger.debug("Head: %s", heap.get(0));
-      
+      logger.debug("Top: %s", heap.pop());
     }
   }
 }
