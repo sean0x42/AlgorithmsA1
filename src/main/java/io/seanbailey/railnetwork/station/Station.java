@@ -15,7 +15,8 @@ public class Station implements Comparable<Station> {
   private final String name;
   private final String line;
   private LinkedList<StationEdge> adjacentStations;
-  private int distanceFromOrigin;
+  private int distance; // Distance from origin
+  private Station previous = null;
 
   /**
    * Constructs a new station.
@@ -26,7 +27,7 @@ public class Station implements Comparable<Station> {
     this.name = name;
     this.line = line;
     adjacentStations = new LinkedList<>();
-    distanceFromOrigin = Integer.MAX_VALUE;
+    distance = Integer.MAX_VALUE;
   }
 
   /**
@@ -37,7 +38,7 @@ public class Station implements Comparable<Station> {
   @Override
   public int compareTo(Station station) {
     // First compare distance from origin
-    int distanceDelta = distanceFromOrigin - station.getDistanceFromOrigin();
+    int distanceDelta = distance - station.getDistance();
     if (distanceDelta != 0) {
       return distanceDelta;
     }
@@ -61,7 +62,7 @@ public class Station implements Comparable<Station> {
       "name: " + name + 
       ", line: " + line +
       ", adjacentStations: " + adjacentStations.size() +
-      ", distanceFromOrigin: " + distanceFromOrigin +
+      ", distance: " + distance +
       "}";
   }
 
@@ -81,11 +82,23 @@ public class Station implements Comparable<Station> {
     return line;
   }
 
-  public int getDistanceFromOrigin() {
-    return distanceFromOrigin;
+  public LinkedList<StationEdge> getAdjacentStations() {
+    return adjacentStations;
   }
 
-  public void setDistanceFromOrigin(int distance) {
-    distanceFromOrigin = distance;
+  public int getDistance() {
+    return distance;
+  }
+
+  public void setDistance(int distance) {
+    this.distance = distance;
+  }
+
+  public Station getPrevious() {
+    return previous;
+  }
+
+  public void setPrevious(Station previous) {
+    this.previous = previous;
   }
 }
